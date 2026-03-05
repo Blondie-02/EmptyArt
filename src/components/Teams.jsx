@@ -8,11 +8,15 @@ const Teams = () => {
         <Title title='Meet the Team' desc='A passionate team of experts dedicated to your success.'/>
 
         <div className='grid grid-cols-2 md:grid-cols-3 gap-5 xl:grid-cols-4'>
-            {teamData().map((member, index) => (
-                <div key={index} className='flex flex-col items-center gap-3 text-center'>
-                    <img src={member.image} alt={member.name} className='w-24 h-24 rounded-full object-cover' />
-                    <h3 className='font-semibold'>{member.name}</h3>
-                    <p className='text-sm opacity-60'>{member.role}</p>
+            {teamData.map((team, index) => (
+                <div key={index} className='flex max-sm:flex-col items-center gap-5 p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl shadow-gray-100 dark:shadow-white/5 hover:scale-103 transition-all duration-400'>
+
+                    <img src={team.image} alt='' className='w-24 h-24 rounded-full' />
+                    <div className='flex-1'>
+                        <h3 className='font-bold text-sm'>{team.name}</h3>
+                        <p className='text-xs opacity-60'>{team.title}</p>
+                    </div>
+                    
                 </div>
             ))}
         </div>

@@ -10,7 +10,7 @@ const OurWork = () => {
             image: assets.work_mobile_app
         },
         {
-            title: 'Dashboard managemen',
+            title: 'Dashboard management',
             description:'We help you execute your plan and deliver results',
             image: assets.work_dashboard_management
         },

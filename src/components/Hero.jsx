@@ -23,7 +23,7 @@ const Hero = () => {
                 whileInView={{opacity: 1, y: 0}}
                 transition={{duration: 0.6, delay: 0.8}}
                 viewport={{once:true}}
-                className='text-4xl sm:text-5xl md:text-6xl xl:text-[84px] font-medium xl:leading-[95px] max-w-5xl'>Turning imagination into <span className='bg-gradient-to-r from-[#5044E5] to-[#4d8cea] bg-clip-text text-transparent'>digital</span>impact.
+                className='text-4xl sm:text-5xl md:text-6xl xl:text-[84px] font-medium xl:leading-[95px] max-w-5xl'>Welcome to <span className='bg-gradient-to-r from-[#5044E5] to-[#4d8cea] bg-clip-text text-transparent'>Empty Art</span>!
             </motion.h1>
 
             <motion.p 

@@ -3,11 +3,12 @@ import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import TrustedBy from './components/TrustedBy'
 import Services from './components/Services'
-import OurWork from './components/OurWork'
+import OurStory from './components/OurStory'
 import Teams from './components/Teams'
-import ContactUs from './components/ContactUs'
 import { Toaster } from 'react-hot-toast'
-import Footer from './components/footer'
+import Register from './components/Register'
+import ContactUs from './components/ContactUs'
+import Footer from './components/Footer'
 
 
 const App = () => {
@@ -54,8 +55,9 @@ const App = () => {
       <Hero/>
       <TrustedBy/>
       <Services/>
-      <OurWork/>
+      <OurStory/>
       <Teams/>
+      <Register/>
       <ContactUs/>
       <Footer theme={theme}/>
 
@@ -67,7 +69,7 @@ const App = () => {
       {/*custom cursor dot*/}
       <div ref={dotRef} className='fixed top-0 left-0 h-3 w-3 rounded-full bg-primary pointer-events-none z-[9999]'></div>
 
-    </div>
+    </div>  
   )
 }
 

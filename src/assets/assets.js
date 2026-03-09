@@ -71,12 +71,12 @@ const assets = {
 export default assets
 
 export const teamData = [
-  { name: 'Haley Carter', title: 'CEO & founder', image: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200' },
-  { name: 'James Walker', title: 'Ads manager', image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200' },
-  { name: 'Jessica Morgan', title: 'Vice president', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&h=200&auto=format&fit=crop' },
-  { name: 'Ashley Bennett', title: 'Marketing & sales', image: 'https://randomuser.me/api/portraits/women/10.jpg' },
-  { name: 'Emily Parker', title: 'Content marketer', image: 'https://randomuser.me/api/portraits/women/11.jpg' },
-  { name: 'Ryan Mitchell', title: 'Content writer', image: 'https://randomuser.me/api/portraits/men/9.jpg' },
-  { name: 'Megan Brooks', title: 'Performance manager', image: 'https://randomuser.me/api/portraits/women/12.jpg' },
-  { name: 'Amber Foster', title: 'Senior writer', image: 'https://randomuser.me/api/portraits/women/14.jpg' },
+  { name: 'Haley Carter', title: 'View Profile', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8YXJ0d29ya3xlbnwwfHwwfHx8MA%3D%3D' },
+  { name: 'James Walker', title: 'View Profile', image: 'https://media.istockphoto.com/id/2205849231/photo/abstract-collage-artwork-mixed-media-composition-with-vintage-photographs-geometric-shapes.webp?a=1&b=1&s=612x612&w=0&k=20&c=BRUKU8TlnjtFoodGRQSrRRPNtxN6u-IfShdlRwiFq4o=' },
+  { name: 'Jessica Morgan', title: 'View Profile', image: 'https://images.unsplash.com/photo-1582201942988-13e60e4556ee?w=1000&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fGRyYXdpbmd8ZW58MHx8MHx8fDA%3D' },
+  { name: 'Ashley Bennett', title: 'View Profile', image: 'https://images.unsplash.com/photo-1558522195-e1201b090344?w=1000&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fGRyYXdpbmd8ZW58MHx8MHx8fDA%3D' },
+  { name: 'Emily Parker', title: 'View Profile', image: 'https://images.unsplash.com/photo-1584804738473-a49b7441c464?w=1000&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fGRyYXdpbmd8ZW58MHx8MHx8fDA%3D' },
+  { name: 'Ryan Mitchell', title: 'View Profile', image: 'https://images.unsplash.com/photo-1772554699613-970ec79a2ad7?w=1000&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDR8eEh4WVRNSExnT2N8fGVufDB8fHx8fA%3D%3D' },
+  { name: 'Megan Brooks', title: 'View Profile', image: 'https://images.unsplash.com/photo-1772955504930-55f0b0d032da?w=1000&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwyM3x8fGVufDB8fHx8fA%3D%3D' },
+  { name: 'Amber Foster', title: 'View Profile', image: 'https://images.unsplash.com/photo-1772289935739-3225a8b3e9d5?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0OXx8fGVufDB8fHx8fA%3D%3D' },
 ]

@@ -9,6 +9,8 @@ import { Toaster } from 'react-hot-toast'
 import Register from './components/Register'
 import ContactUs from './components/ContactUs'
 import Footer from './components/Footer'
+import { Routes, Route } from 'react-router-dom'
+import Dashboard from './components/Dashboard'
 
 
 const App = () => {
@@ -49,17 +51,24 @@ const App = () => {
     }
   }, [])
   return (
-    <div className='dark:bg-black relative'>
-      <Toaster/>
-      <Navbar theme={theme} setTheme={setTheme}/>
-      <Hero/>
-      <TrustedBy/>
-      <Services/>
-      <OurStory/>
-      <Teams/>
-      <Register/>
-      <ContactUs/>
-      <Footer theme={theme}/>
+
+    <Routes>
+      <Route path='/' element={
+
+        <div className='dark:bg-black relative'>
+
+        <Toaster/>
+        <Navbar theme={theme} setTheme={setTheme}/>
+        <Hero/>
+        <TrustedBy/>
+        <Services/>
+        <OurStory/>
+        <Teams/>
+        <Register/>
+        <ContactUs/>
+        <Footer theme={theme}/>
+
+  
 
 
       {/*custom cursor ring*/}
@@ -69,7 +78,13 @@ const App = () => {
       {/*custom cursor dot*/}
       <div ref={dotRef} className='fixed top-0 left-0 h-3 w-3 rounded-full bg-primary pointer-events-none z-[9999]'></div>
 
-    </div>  
+      </div>  
+    }/>
+
+    <Route path='/dashboard' element={<Dashboard theme={theme} setTheme={setTheme}/>} />
+    </Routes>
+
+
   )
 }
 

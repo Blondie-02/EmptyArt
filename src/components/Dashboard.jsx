@@ -1,430 +1,395 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-// ── Icons ────────────────────────────────────────────────────
-const Icon = ({ d, size = 20 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d={d} />
-  </svg>
-)
-const Icons = {
-  home:      "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10",
-  compass:   "M12 2a10 10 0 100 20A10 10 0 0012 2z M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z",
-  portfolio: "M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z",
-  bell:      "M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0",
-  message:   "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z",
-  bookmark:  "M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z",
-  settings:  "M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z",
-  heart:     "M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z",
-  comment:   "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z",
-  share:     "M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8 M16 6l-4-4-4 4 M12 2v13",
-  plus:      "M12 5v14 M5 12h14",
-  search:    "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
-  logout:    "M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9",
-  user:      "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z",
-  grid:      "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
-  list:      "M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01",
-}
+// ─── DATA ────────────────────────────────────────────────────────────────────
 
-// ── Mock Data ────────────────────────────────────────────────
-const mockUser = {
-  name: 'Alex Rivera',
-  handle: '@alexrivera',
-  avatar: 'https://i.pravatar.cc/150?img=11',
-  bio: 'Digital illustrator & motion designer. Creating worlds one frame at a time.',
-  followers: '12.4k',
-  following: 348,
-  posts: 94,
-}
+const POSTS = [
+  { id: 1, img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=700&q=80", user: "Elena Vasquez", handle: "@elenav", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80", likes: 1243, comments: 87, title: "Chromatic Dreamscape", tags: ["digitalart", "conceptart"], time: "2h ago", saved: false },
+  { id: 2, img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=700&q=80", user: "Marcus Chen", handle: "@mchen_art", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80", likes: 892, comments: 34, title: "Abstract Fluid No. 7", tags: ["abstract", "painting"], time: "5h ago", saved: true },
+  { id: 3, img: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=700&q=80", user: "Yuki Tanaka", handle: "@yukidraws", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80", likes: 2104, comments: 156, title: "Neon Solitude", tags: ["illustration", "characterdesign"], time: "8h ago", saved: false },
+  { id: 4, img: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=700&q=80", user: "Liam Foster", handle: "@liamfosterart", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=80", likes: 3311, comments: 204, title: "Watercolor Bloom", tags: ["watercolor", "botanical"], time: "1d ago", saved: true },
+  { id: 5, img: "https://images.unsplash.com/photo-1605379399642-870262d3d051?w=700&q=80", user: "Sofia Morales", handle: "@sofiaart", avatar: "https://images.unsplash.com/photo-1488716820095-cbe80883c496?w=80&q=80", likes: 567, comments: 22, title: "Digital Workshop Setup", tags: ["workspace", "artist"], time: "1d ago", saved: false },
+];
 
-const mockPosts = [
-  { id:1,  user:'Maya Chen',    handle:'@mayac',     avatar:'https://i.pravatar.cc/40?img=5',  img:'https://picsum.photos/seed/art1/400/500',  likes:842,  comments:34, title:'Neon Dreams',        tags:['digital','neon'] },
-  { id:2,  user:'Luca Bianchi', handle:'@lucab',     avatar:'https://i.pravatar.cc/40?img=15', img:'https://picsum.photos/seed/art2/400/300',  likes:1203, comments:67, title:'Abstract Flow',      tags:['abstract'] },
-  { id:3,  user:'Sara Kim',     handle:'@sarakim',   avatar:'https://i.pravatar.cc/40?img=9',  img:'https://picsum.photos/seed/art3/400/600',  likes:567,  comments:21, title:'Forest Spirit',      tags:['nature','fantasy'] },
-  { id:4,  user:'James Obi',    handle:'@jamesobi',  avatar:'https://i.pravatar.cc/40?img=12', img:'https://picsum.photos/seed/art4/400/350',  likes:2341, comments:89, title:'City Pulse',         tags:['urban','photo'] },
-  { id:5,  user:'Elena V.',     handle:'@elenav',    avatar:'https://i.pravatar.cc/40?img=7',  img:'https://picsum.photos/seed/art5/400/500',  likes:765,  comments:43, title:'Solitude',           tags:['portrait'] },
-  { id:6,  user:'Tom Nakamura', handle:'@tomnaka',   avatar:'https://i.pravatar.cc/40?img=3',  img:'https://picsum.photos/seed/art6/400/400',  likes:432,  comments:15, title:'Geometric Mind',     tags:['geometry'] },
-  { id:7,  user:'Priya S.',     handle:'@priyaS',    avatar:'https://i.pravatar.cc/40?img=20', img:'https://picsum.photos/seed/art7/400/550',  likes:987,  comments:52, title:'Ocean Whisper',      tags:['watercolor'] },
-  { id:8,  user:'Felix M.',     handle:'@felixm',    avatar:'https://i.pravatar.cc/40?img=8',  img:'https://picsum.photos/seed/art8/400/300',  likes:1456, comments:76, title:'Mechanical Heart',   tags:['sci-fi','mech'] },
-]
+const PORTFOLIO = [
+  { id: 1, img: "https://images.unsplash.com/photo-1483431974879-e3a67f03fb8f?w=300&q=80", likes: 234 },
+  { id: 2, img: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=300&q=80", likes: 891 },
+  { id: 3, img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80", likes: 445 },
+  { id: 4, img: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=300&q=80", likes: 1203 },
+  { id: 5, img: "https://images.unsplash.com/photo-1617791160536-598cf32026fb?w=300&q=80", likes: 667 },
+  { id: 6, img: "https://images.unsplash.com/photo-1610337673044-720471f83677?w=300&q=80", likes: 389 },
+];
 
-const suggestedUsers = [
-  { name:'Zoe Park',     handle:'@zoepark',   avatar:'https://i.pravatar.cc/40?img=25', tags:'Illustrator' },
-  { name:'Ren Tanaka',   handle:'@rentanaka', avatar:'https://i.pravatar.cc/40?img=17', tags:'3D Artist' },
-  { name:'Mia Torres',   handle:'@miatorres', avatar:'https://i.pravatar.cc/40?img=22', tags:'Motion' },
-]
+const SUGGESTED = [
+  { name: "Priya Nair",  handle: "@priyanair", avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&q=80", followers: "12.4k", specialty: "Concept Art" },
+  { name: "Tom Wright",  handle: "@tomwright",  avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80", followers: "8.9k",  specialty: "3D Modeling" },
+  { name: "Mei Lin",     handle: "@meilinart",  avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&q=80", followers: "21.1k", specialty: "Illustration" },
+];
 
-const notifications = [
-  { id:1, text:'Maya Chen liked your post "Night City"',    time:'2m',  avatar:'https://i.pravatar.cc/32?img=5',  unread:true },
-  { id:2, text:'Luca started following you',               time:'14m', avatar:'https://i.pravatar.cc/32?img=15', unread:true },
-  { id:3, text:'Sara commented: "Absolutely stunning 🔥"', time:'1h',  avatar:'https://i.pravatar.cc/32?img=9',  unread:false },
-  { id:4, text:'Your post reached 1k likes!',              time:'3h',  avatar:null,                              unread:false },
-]
+const DISCUSSIONS = [
+  { title: "What brush packs do you swear by?",       replies: 43,  trending: true  },
+  { title: "AI Detection false positives happening?", replies: 127, trending: true  },
+  { title: "Best practices for portfolio curation",   replies: 29,  trending: false },
+  { title: "Commission pricing guide 2025",           replies: 88,  trending: false },
+];
 
-// ── PostCard ─────────────────────────────────────────────────
-const PostCard = ({ post, index }) => {
-  const [liked, setLiked] = useState(false)
-  const [saved, setSaved] = useState(false)
+// ─── ICONS ───────────────────────────────────────────────────────────────────
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay: index * 0.07, ease: [0.22,1,0.36,1] }}
-      className="group relative rounded-2xl overflow-hidden bg-white dark:bg-[#0f1117] border border-gray-100 dark:border-white/[0.06] shadow-sm hover:shadow-lg transition-shadow duration-300 break-inside-avoid mb-4"
-    >
-      {/* Image */}
-      <div className="relative overflow-hidden">
-        <img
-          src={post.img}
-          alt={post.title}
-          className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+const IC = {
+  Home:      ({ solid }) => <svg width="18" height="18" viewBox="0 0 24 24" fill={solid ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>,
+  Search:    ()           => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  Bookmark:  ({ solid }) => <svg width="18" height="18" viewBox="0 0 24 24" fill={solid ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>,
+  Briefcase: ()           => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
+  Message:   ()           => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  Bell:      ()           => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+  Heart:     ({ solid }) => <svg width="17" height="17" viewBox="0 0 24 24" fill={solid ? "#f87171" : "none"} stroke={solid ? "#f87171" : "currentColor"} strokeWidth="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  Comment:   ()           => <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  Dots:      ()           => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>,
+  Plus:      ()           => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  Check:     ()           => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>,
+  Shield:    ()           => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  Trending:  ()           => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+  Arrow:     ()           => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+  Settings:  ()           => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  Logout:    ()           => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+};
 
-        {/* Save button */}
-        <button
-          onClick={() => setSaved(!saved)}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/40"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? 'white' : 'none'} stroke="white" strokeWidth="2">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-          </svg>
-        </button>
+const NAV = [
+  { key: "home",      label: "Home",          Icon: IC.Home      },
+  { key: "explore",   label: "Explore",       Icon: IC.Search    },
+  { key: "bookmarks", label: "Bookmarks",     Icon: IC.Bookmark  },
+  { key: "jobs",      label: "Jobs",          Icon: IC.Briefcase },
+  { key: "messages",  label: "Messages",      Icon: IC.Message   },
+  { key: "notifs",    label: "Notifications", Icon: IC.Bell, badge: 3 },
+];
 
-        {/* Tags */}
-        <div className="absolute bottom-3 left-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          {post.tags.map(t => (
-            <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white font-medium">
-              #{t}
-            </span>
-          ))}
-        </div>
-      </div>
+// ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
-      {/* Card body */}
-      <div className="p-3">
-        {/* Author */}
-        <div className="flex items-center gap-2 mb-2">
-          <img src={post.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
-          <span className="text-xs text-gray-500 dark:text-white/50 font-medium">{post.handle}</span>
-        </div>
-        <p className="text-sm font-semibold text-gray-800 dark:text-white mb-2">{post.title}</p>
-
-        {/* Actions */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setLiked(!liked)}
-            className={`flex items-center gap-1.5 text-xs transition-colors duration-200 ${liked ? 'text-rose-500' : 'text-gray-400 dark:text-white/30 hover:text-rose-400'}`}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
-            {liked ? post.likes + 1 : post.likes}
-          </button>
-          <button className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/30 hover:text-[#5044E5] transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-            </svg>
-            {post.comments}
-          </button>
-          <button className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/30 hover:text-[#5044E5] transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8 M16 6l-4-4-4 4 M12 2v13" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-// ── Dashboard ─────────────────────────────────────────────────
 const Dashboard = () => {
-  const [activeNav, setActiveNav]   = useState('home')
-  const [activeTab, setActiveTab]   = useState('following')
-  const [showNotif, setShowNotif]   = useState(false)
-  const [following, setFollowing]   = useState({})
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const navigate = useNavigate();
 
-  const unreadCount = notifications.filter(n => n.unread).length
+  const [tab, setTab]               = useState("home");
+  const [profileTab, setProfileTab] = useState("portfolio");
+  const [posts, setPosts]           = useState(POSTS);
+  const [following, setFollowing]   = useState({});
+  const [feedRatio, setFeedRatio]   = useState(60);
+  const [showFeedCfg, setShowFeedCfg] = useState(false);
 
-  const navItems = [
-    { id:'home',      icon: Icons.home,      label:'Home' },
-    { id:'explore',   icon: Icons.compass,   label:'Explore' },
-    { id:'portfolio', icon: Icons.portfolio, label:'Portfolio' },
-    { id:'messages',  icon: Icons.message,   label:'Messages' },
-    { id:'bookmarks', icon: Icons.bookmark,  label:'Bookmarks' },
-    { id:'settings',  icon: Icons.settings,  label:'Settings' },
-  ]
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) navigate('/');
+  }, []);
+
+  const toggleLike = (id) =>
+    setPosts(prev => prev.map(p =>
+      p.id === id ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p
+    ));
+
+  const toggleSave = (id) =>
+    setPosts(prev => prev.map(p =>
+      p.id === id ? { ...p, saved: !p.saved } : p
+    ));
+
+  const toggleFollow = (handle) =>
+    setFollowing(prev => ({ ...prev, [handle]: !prev[handle] }));
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
 
   return (
-    <div className="min-h-screen bg-[#f7f8fc] dark:bg-[#080a0f] text-gray-800 dark:text-white flex font-sans">
+    <div className="min-h-screen bg-[#0f0f0f] text-[#e0e0e0]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,500&display=swap');
 
-      {/* ── LEFT SIDEBAR ── */}
-      <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen z-40 flex flex-col
-        w-64 bg-white dark:bg-[#0c0e15] border-r border-gray-100 dark:border-white/[0.05]
-        transition-transform duration-300 lg:translate-x-0
-        ${sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
-      `}>
-        {/* Logo */}
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-white/[0.05]">
-          <span className="text-xl font-black tracking-tight">
-            empty<span className="text-[#5044E5]">.art</span>
-          </span>
-        </div>
+        .db-scroll::-webkit-scrollbar { width: 3px; }
+        .db-scroll::-webkit-scrollbar-track { background: transparent; }
+        .db-scroll::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
 
-        {/* User profile mini */}
-        <div className="px-4 py-4 border-b border-gray-100 dark:border-white/[0.05]">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <img src={mockUser.avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-[#5044E5]/40" />
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white dark:border-[#0c0e15]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate">{mockUser.name}</p>
-              <p className="text-xs text-gray-400 dark:text-white/40 truncate">{mockUser.handle}</p>
+        .nav-btn { transition: background 0.15s, color 0.15s; border-radius: 10px; }
+        .nav-btn:hover { background: #1a1a1a; }
+        .nav-btn.is-active { background: #1e1e1e; color: #fff; }
+
+        .post-img { display: block; width: 100%; object-fit: cover; max-height: 440px; transition: transform 0.35s ease; }
+        .post-wrap:hover .post-img { transform: scale(1.01); }
+
+        .grid-thumb { position: relative; overflow: hidden; border-radius: 5px; aspect-ratio: 1; }
+        .grid-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s; display: block; }
+        .grid-thumb:hover img { transform: scale(1.07); }
+        .grid-thumb .th-over { position: absolute; inset: 0; background: rgba(0,0,0,.55); opacity: 0; display: flex; align-items: center; justify-content: center; transition: opacity .25s; }
+        .grid-thumb:hover .th-over { opacity: 1; }
+
+        .tag-pill { transition: background .15s; }
+        .tag-pill:hover { background: #262626; }
+
+        .card { background: #141414; border: 1px solid #1e1e1e; border-radius: 16px; overflow: hidden; }
+
+        .feed-item { animation: riseIn .4s ease both; }
+        @keyframes riseIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .ai-pill  { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:600; letter-spacing:.04em; background:linear-gradient(135deg,#1a3a2a,#0a3d20); border:1px solid #2d6b45; color:#4ade80; }
+        .glz-pill { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:600; letter-spacing:.04em; background:linear-gradient(135deg,#1a1a3a,#0d0d4d); border:1px solid #3333aa; color:#818cf8; }
+
+        input[type=range] { -webkit-appearance:none; appearance:none; height:3px; background:#2a2a2a; border-radius:2px; outline:none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:13px; height:13px; border-radius:50%; background:#7c3aed; cursor:pointer; }
+      `}</style>
+
+      <div className="flex h-screen overflow-hidden">
+
+        {/* ── LEFT SIDEBAR ─────────────────────────────────── */}
+        <aside className="w-[230px] flex-shrink-0 flex flex-col border-r border-[#1a1a1a] py-6 px-3 db-scroll overflow-y-auto">
+
+          <div className="flex items-center gap-2 px-2 mb-8">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-800 flex items-center justify-center font-bold text-white text-sm">C</div>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic" }} className="text-[1.15rem] text-white tracking-tight">Cara</span>
+            <span className="ml-1 text-[9px] bg-[#1e1e1e] text-[#555] px-1.5 py-0.5 rounded">beta</span>
+          </div>
+
+          <nav className="flex flex-col gap-0.5 flex-1">
+            {NAV.map(({ key, label, Icon, badge }) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`nav-btn flex items-center gap-3 px-3 py-2.5 text-sm w-full text-left ${tab === key ? "is-active" : "text-[#666]"}`}
+              >
+                <Icon solid={tab === key} />
+                <span>{label}</span>
+                {badge && (
+                  <span className="ml-auto text-[10px] bg-violet-600 text-white w-[18px] h-[18px] rounded-full flex items-center justify-center font-semibold">
+                    {badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+
+          <div className="border-t border-[#1a1a1a] my-3" />
+
+          <div className="px-2 flex items-center gap-2.5 mb-3">
+            <img src="https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?w=80&q=80" alt="me" className="w-9 h-9 rounded-full object-cover border border-[#2a2a2a] flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm text-white font-medium leading-tight truncate">Jamie Kim</p>
+              <p className="text-xs text-[#555] truncate">@jamiekim</p>
             </div>
           </div>
-          {/* Stats */}
-          <div className="flex gap-3 mt-3 text-center">
-            {[['Posts', mockUser.posts], ['Followers', mockUser.followers], ['Following', mockUser.following]].map(([label, val]) => (
-              <div key={label} className="flex-1">
-                <p className="text-sm font-bold text-gray-900 dark:text-white">{val}</p>
-                <p className="text-[10px] text-gray-400 dark:text-white/35">{label}</p>
+
+          <button
+            className="mx-2 mb-2 bg-violet-700 hover:bg-violet-600 text-white rounded-xl py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
+          >
+            <IC.Plus /> New Post
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="mx-2 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-[#555] hover:text-[#aaa] hover:bg-[#1a1a1a] transition-colors"
+          >
+            <IC.Logout /> Log out
+          </button>
+
+          <div className="px-2 pt-4 flex flex-col gap-1.5">
+            <span className="ai-pill"><IC.Check /> AI-Free Portfolio</span>
+            <span className="glz-pill"><IC.Shield /> Glaze Protected</span>
+          </div>
+        </aside>
+
+        {/* ── MAIN FEED ────────────────────────────────────── */}
+        <main className="flex-1 db-scroll overflow-y-auto">
+
+          <div className="sticky top-0 z-20 bg-[#0f0f0f]/90 backdrop-blur border-b border-[#1a1a1a] px-6 py-2.5 flex items-center justify-between">
+            <div className="flex gap-1">
+              {["Home", "Following", "Explore"].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t.toLowerCase())}
+                  className={`px-3.5 py-1.5 rounded-lg text-sm transition-colors ${tab === t.toLowerCase() ? "bg-[#1e1e1e] text-white" : "text-[#555] hover:text-[#999]"}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowFeedCfg(v => !v)}
+              className="flex items-center gap-1.5 text-xs text-[#555] hover:text-[#999] px-3 py-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors"
+            >
+              <IC.Settings /> Customize Feed
+            </button>
+          </div>
+
+          {showFeedCfg && (
+            <div className="mx-6 mt-4 p-4 bg-[#141414] border border-[#1e1e1e] rounded-2xl">
+              <p className="text-sm text-white font-medium mb-3">Feed Ratio</p>
+              <div className="space-y-2.5">
+                <div>
+                  <div className="flex justify-between text-xs text-[#666] mb-1">
+                    <span>People You Follow</span>
+                    <span className="text-violet-400">{feedRatio}%</span>
+                  </div>
+                  <input type="range" min={0} max={100} value={feedRatio} onChange={e => setFeedRatio(+e.target.value)} className="w-full" />
+                </div>
+                <div className="flex justify-between text-xs text-[#555]">
+                  <span>Your Follow's Network</span><span className="text-violet-400">{Math.round((100 - feedRatio) * 0.6)}%</span>
+                </div>
+                <div className="flex justify-between text-xs text-[#555]">
+                  <span>Cara Site-Wide</span><span className="text-violet-400">{Math.round((100 - feedRatio) * 0.4)}%</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="px-6 py-5 space-y-6 max-w-[620px]">
+            {posts.map((p, i) => (
+              <div key={p.id} className="card post-wrap feed-item" style={{ animationDelay: `${i * 0.07}s` }}>
+                <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                  <div className="flex items-center gap-2.5">
+                    <img src={p.avatar} alt={p.user} className="w-9 h-9 rounded-full object-cover border border-[#252525]" />
+                    <div>
+                      <p className="text-sm text-white font-medium leading-none mb-0.5">{p.user}</p>
+                      <p className="text-xs text-[#484848]">{p.handle} · {p.time}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="ai-pill"><IC.Check /> Human</span>
+                    <button className="text-[#444] hover:text-[#888] transition-colors p-1"><IC.Dots /></button>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden">
+                  <img src={p.img} alt={p.title} className="post-img" />
+                </div>
+
+                <div className="flex items-center gap-4 px-4 pt-3 pb-1">
+                  <button onClick={() => toggleLike(p.id)} className={`flex items-center gap-1.5 text-sm transition-colors ${p.liked ? "text-red-400" : "text-[#666] hover:text-white"}`}>
+                    <IC.Heart solid={p.liked} /><span>{p.likes.toLocaleString()}</span>
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm text-[#666] hover:text-white transition-colors">
+                    <IC.Comment /><span>{p.comments}</span>
+                  </button>
+                  <button onClick={() => toggleSave(p.id)} className={`ml-auto transition-colors ${p.saved ? "text-violet-400" : "text-[#666] hover:text-white"}`}>
+                    <IC.Bookmark solid={p.saved} />
+                  </button>
+                </div>
+
+                <div className="px-4 pb-4 pt-1">
+                  <p className="text-sm text-[#bbb] mb-2">
+                    <span className="text-white font-medium mr-1">{p.user}</span>{p.title}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {p.tags.map(tag => (
+                      <span key={tag} className="tag-pill text-xs text-[#666] bg-[#191919] border border-[#222] px-2.5 py-0.5 rounded-full cursor-pointer">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
+        </main>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => { setActiveNav(item.id); setSidebarOpen(false) }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                activeNav === item.id
-                  ? 'bg-[#5044E5] text-white shadow-md shadow-[#5044E5]/30'
-                  : 'text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <Icon d={item.icon} size={18} />
-              {item.label}
-            </button>
-          ))}
-        </nav>
+        {/* ── RIGHT SIDEBAR ────────────────────────────────── */}
+        <aside className="w-[268px] flex-shrink-0 border-l border-[#1a1a1a] db-scroll overflow-y-auto py-5 px-4 space-y-5">
 
-        {/* New Post button */}
-        <div className="px-4 pb-4">
-          <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#5044E5] to-[#4d8cea] text-white text-sm font-semibold py-2.5 rounded-xl hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-[#5044E5]/25">
-            <Icon d={Icons.plus} size={16} />
-            New Post
-          </button>
-        </div>
-
-        {/* Logout */}
-        <div className="px-4 pb-5">
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-400 dark:text-white/30 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all">
-            <Icon d={Icons.logout} size={15} />
-            Sign out
-          </button>
-        </div>
-      </aside>
-
-      {/* Sidebar overlay (mobile) */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* ── MAIN CONTENT ── */}
-      <main className="flex-1 min-w-0 flex flex-col">
-
-        {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-white/80 dark:bg-[#080a0f]/80 backdrop-blur-md border-b border-gray-100 dark:border-white/[0.05] px-4 sm:px-6 py-3 flex items-center gap-4">
-
-          {/* Mobile menu toggle */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.05]"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 12h18 M3 6h18 M3 18h18" />
-            </svg>
-          </button>
-
-          {/* Search */}
-          <div className="flex-1 max-w-md relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search artists, artworks…"
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-xl bg-gray-100 dark:bg-white/[0.05] border border-transparent focus:border-[#5044E5]/40 focus:ring-2 focus:ring-[#5044E5]/10 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-white/30"
-            />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3a3a3a]"><IC.Search /></span>
+            <input type="text" placeholder="Search artists, tags..." className="w-full bg-[#141414] border border-[#1e1e1e] rounded-xl pl-8 pr-3 py-2 text-sm text-[#ccc] placeholder-[#3a3a3a] outline-none focus:border-violet-700 transition-colors" />
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotif(!showNotif)}
-                className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
-              >
-                <Icon d={Icons.bell} size={20} />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
-                )}
-              </button>
-
-              <AnimatePresence>
-                {showNotif && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={{ duration: 0.18 }}
-                    className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#0f1117] border border-gray-100 dark:border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50"
-                  >
-                    <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.06] flex items-center justify-between">
-                      <span className="text-sm font-bold">Notifications</span>
-                      <span className="text-xs text-[#5044E5] font-medium cursor-pointer">Mark all read</span>
+          {/* Profile card */}
+          <div className="card">
+            <div className="h-14 relative overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1682687220499-d9c06b872f6b?w=400&q=80" alt="" className="w-full h-full object-cover opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#141414]/60" />
+            </div>
+            <div className="px-4 pb-4 -mt-5">
+              <img src="https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?w=80&q=80" alt="me" className="w-11 h-11 rounded-full object-cover border-2 border-[#0f0f0f] mb-2" />
+              <p className="text-white text-sm font-semibold">Jamie Kim</p>
+              <p className="text-[#484848] text-xs mb-3">Concept artist · Seoul</p>
+              <div className="flex gap-4 text-xs mb-3">
+                {[["1.2k","Following"],["8.4k","Followers"],["94","Posts"]].map(([n,l]) => (
+                  <div key={l}><p className="text-white font-semibold">{n}</p><p className="text-[#484848]">{l}</p></div>
+                ))}
+              </div>
+              <div className="flex gap-1 mb-2">
+                {["portfolio","feed"].map(t => (
+                  <button key={t} onClick={() => setProfileTab(t)} className={`flex-1 text-xs py-1.5 rounded-lg capitalize transition-colors ${profileTab === t ? "bg-violet-800 text-white" : "text-[#484848] hover:text-[#999]"}`}>{t}</button>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                {PORTFOLIO.map(p => (
+                  <div key={p.id} className="grid-thumb cursor-pointer">
+                    <img src={p.img} alt="" />
+                    <div className="th-over">
+                      <span className="text-white text-[11px] font-medium flex items-center gap-1">
+                        <IC.Heart solid /> {p.likes}
+                      </span>
                     </div>
-                    {notifications.map(n => (
-                      <div key={n.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors ${n.unread ? 'bg-blue-50/50 dark:bg-[#5044E5]/5' : ''}`}>
-                        {n.avatar
-                          ? <img src={n.avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
-                          : <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#5044E5] to-[#4d8cea] flex items-center justify-center shrink-0 mt-0.5">
-                              <Icon d={Icons.bell} size={12} />
-                            </div>
-                        }
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-gray-700 dark:text-white/80 leading-relaxed">{n.text}</p>
-                          <p className="text-[10px] text-gray-400 dark:text-white/30 mt-0.5">{n.time} ago</p>
-                        </div>
-                        {n.unread && <span className="w-1.5 h-1.5 bg-[#5044E5] rounded-full shrink-0 mt-1.5" />}
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Avatar */}
-            <img src={mockUser.avatar} alt="" className="w-8 h-8 rounded-full object-cover cursor-pointer ring-2 ring-[#5044E5]/30 hover:ring-[#5044E5] transition-all" />
-          </div>
-        </header>
-
-        {/* Feed tabs */}
-        <div className="px-4 sm:px-6 pt-5 pb-0 flex items-center justify-between gap-4">
-          <div className="flex gap-1 bg-gray-100 dark:bg-white/[0.04] rounded-xl p-1">
-            {['following', 'explore', 'trending'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-1.5 text-sm font-semibold rounded-lg capitalize transition-all duration-200 ${
-                  activeTab === tab
-                    ? 'bg-white dark:bg-[#0f1117] text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/60'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {/* View toggle placeholder */}
-          <div className="flex gap-1">
-            {[Icons.grid, Icons.list].map((icon, i) => (
-              <button key={i} className={`p-2 rounded-lg transition-colors ${i === 0 ? 'bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-white' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.04]'}`}>
-                <Icon d={icon} size={16} />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Feed */}
-        <div className="flex-1 px-4 sm:px-6 pt-5 pb-8">
-          {/* Masonry grid */}
-          <div className="columns-1 sm:columns-2 xl:columns-3 gap-4">
-            {mockPosts.map((post, i) => (
-              <PostCard key={post.id} post={post} index={i} />
-            ))}
-          </div>
-        </div>
-      </main>
-
-      {/* ── RIGHT SIDEBAR ── */}
-      <aside className="hidden xl:flex flex-col w-72 shrink-0 sticky top-0 h-screen border-l border-gray-100 dark:border-white/[0.05] bg-white dark:bg-[#0c0e15] px-5 py-6 overflow-y-auto">
-
-        {/* Your Profile card */}
-        <div className="rounded-2xl bg-gradient-to-br from-[#5044E5]/10 to-[#4d8cea]/5 border border-[#5044E5]/20 p-4 mb-6">
-          <div className="flex items-center gap-3 mb-3">
-            <img src={mockUser.avatar} alt="" className="w-12 h-12 rounded-full object-cover ring-2 ring-[#5044E5]/40" />
-            <div>
-              <p className="font-bold text-sm">{mockUser.name}</p>
-              <p className="text-xs text-gray-400 dark:text-white/40">{mockUser.handle}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-white/50 leading-relaxed mb-4">{mockUser.bio}</p>
-          <button className="w-full py-2 text-xs font-semibold rounded-xl bg-[#5044E5] text-white hover:opacity-90 transition-opacity">
-            Edit Profile
-          </button>
-        </div>
 
-        {/* Suggested to follow */}
-        <div className="mb-6">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-white/30 mb-3">Suggested for you</h3>
-          <div className="space-y-3">
-            {suggestedUsers.map((u, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.08 }}
-                className="flex items-center gap-3"
-              >
-                <img src={u.avatar} alt="" className="w-9 h-9 rounded-full object-cover" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">{u.name}</p>
-                  <p className="text-[11px] text-gray-400 dark:text-white/35">{u.tags}</p>
+          {/* Suggested */}
+          <div className="card p-4">
+            <p className="text-[10px] font-semibold text-[#3a3a3a] uppercase tracking-widest mb-3">Suggested Artists</p>
+            <div className="space-y-3">
+              {SUGGESTED.map(a => (
+                <div key={a.handle} className="flex items-center gap-2.5">
+                  <img src={a.avatar} alt={a.name} className="w-8 h-8 rounded-full object-cover border border-[#252525] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium truncate leading-tight">{a.name}</p>
+                    <p className="text-xs text-[#484848] truncate">{a.specialty} · {a.followers}</p>
+                  </div>
+                  <button
+                    onClick={() => toggleFollow(a.handle)}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1 flex-shrink-0 ${following[a.handle] ? "border-violet-700 text-violet-400 bg-violet-900/20" : "border-[#2a2a2a] text-[#777] hover:border-violet-700 hover:text-violet-400"}`}
+                  >
+                    {following[a.handle] ? <><IC.Check /> Following</> : "Follow"}
+                  </button>
                 </div>
-                <button
-                  onClick={() => setFollowing(prev => ({ ...prev, [u.handle]: !prev[u.handle] }))}
-                  className={`text-xs font-semibold px-3 py-1 rounded-full border transition-all duration-200 ${
-                    following[u.handle]
-                      ? 'border-gray-300 dark:border-white/20 text-gray-500 dark:text-white/40'
-                      : 'border-[#5044E5] text-[#5044E5] hover:bg-[#5044E5] hover:text-white'
-                  }`}
-                >
-                  {following[u.handle] ? 'Following' : 'Follow'}
-                </button>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Trending tags */}
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-white/30 mb-3">Trending Tags</h3>
-          <div className="flex flex-wrap gap-2">
-            {['#digitalart','#illustration','#concept','#character','#scifi','#fantasy','#portrait','#animation'].map(tag => (
-              <button
-                key={tag}
-                className="text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/50 hover:bg-[#5044E5]/10 hover:text-[#5044E5] transition-all duration-200"
-              >
-                {tag}
-              </button>
+          {/* Discussions */}
+          <div className="card p-4">
+            <p className="text-[10px] font-semibold text-[#3a3a3a] uppercase tracking-widest mb-3">Latest Discussions</p>
+            <div className="space-y-3">
+              {DISCUSSIONS.map((d, i) => (
+                <div key={i} className="group cursor-pointer">
+                  <div className="flex items-start gap-1.5">
+                    {d.trending && <span className="text-orange-500 mt-0.5 flex-shrink-0"><IC.Trending /></span>}
+                    <p className={`text-[13px] text-[#888] group-hover:text-white transition-colors leading-snug ${!d.trending ? "ml-[18px]" : ""}`}>{d.title}</p>
+                  </div>
+                  <p className="text-[11px] text-[#333] mt-0.5 ml-[18px]">{d.replies} replies</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Jobs */}
+          <div className="rounded-2xl p-4 border border-[#252560] bg-gradient-to-br from-[#111030] to-[#0c0c28]">
+            <p className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest mb-1.5">Jobs Board</p>
+            <p className="text-sm text-white font-medium mb-0.5">3 new listings from AAA studios</p>
+            <p className="text-xs text-[#484848] mb-3">FromSoftware · Kojima Productions · WildBrain</p>
+            <button className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 border border-[#2a2a70] hover:border-indigo-600 py-1.5 rounded-xl transition-colors">
+              View Openings <IC.Arrow />
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-x-3 gap-y-1 pb-4 px-1">
+            {["Privacy", "Terms", "About", "Blog", "Support Cara"].map(l => (
+              <span key={l} className="text-[11px] text-[#2e2e2e] hover:text-[#666] cursor-pointer transition-colors">{l}</span>
             ))}
           </div>
-        </div>
-      </aside>
+        </aside>
+
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;
+
+

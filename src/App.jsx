@@ -10,6 +10,8 @@ import Register from './components/Register'
 import ContactUs from './components/ContactUs'
 import Footer from './components/Footer'
 import Dashboard from './components/Dashboard'
+import AdminDashboard from './components/AdminDashboard'
+import PrivateAdminRoute from './components/PrivateAdminRoute'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 
@@ -72,7 +74,12 @@ const App = () => {
           </>
           }
           />
-          <Route path='/dashboard' element={<Dashboard/>}/> 
+          <Route path='/dashboard' element={<Dashboard/>}/>
+          <Route path='/admin' element={
+            <PrivateAdminRoute>
+              <AdminDashboard/>
+            </PrivateAdminRoute>
+          }/> 
         </Routes>
         <Footer theme={theme}/>
 

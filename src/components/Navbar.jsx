@@ -4,6 +4,17 @@ import ThemeToggleBtn from './ThemeToggleBtn'
 import { motion } from "motion/react"
 
 const Navbar = ({theme, setTheme}) => {
+
+    const token = localStorage.getItem('token');
+    let isAdmin = false;
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            isAdmin = payload.role === 'admin';
+        } catch (err) {
+            console.log("Invalid token");
+        }
+    }
     
     const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -24,6 +35,9 @@ const Navbar = ({theme, setTheme}) => {
                 <a onClick={()=> setSidebarOpen(false)} href="#our-story" className='sm:hover:border-b'>Our story</a>
                 <a onClick={()=> setSidebarOpen(false)} href="#register" className='sm:hover:border-b'>Register</a>
                 <a onClick={()=> setSidebarOpen(false)} href="#contact-us" className='sm:hover:border-b'>Contact us</a>
+
+                 {isAdmin && (
+                    <a onClick={()=> setSidebarOpen(false)} href="/admin" className='sm:hover:border-b'>Admin Dashboard</a>)}
                 
             </div> 
 

@@ -63,7 +63,7 @@ const NAV = [
   { key: "notifs",    label: "Notifications", Icon: IC.Bell, badge: 3 },
 ];
 
-// ─── DASHBOARD ───────────────────────────────────────────────────────────────
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -287,7 +287,7 @@ const Dashboard = () => {
           </div>
         </main>
 
-        {/* ── RIGHT SIDEBAR ────────────────────────────────── */}
+
         <aside className="w-[268px] flex-shrink-0 border-l border-[#1a1a1a] db-scroll overflow-y-auto py-5 px-4 space-y-5">
 
           <div className="relative">
@@ -295,7 +295,7 @@ const Dashboard = () => {
             <input type="text" placeholder="Search artists, tags..." className="w-full bg-[#141414] border border-[#1e1e1e] rounded-xl pl-8 pr-3 py-2 text-sm text-[#ccc] placeholder-[#3a3a3a] outline-none focus:border-violet-700 transition-colors" />
           </div>
 
-          {/* Profile card */}
+
           <div className="card">
             <div className="h-14 relative overflow-hidden">
               <img src="https://images.unsplash.com/photo-1682687220499-d9c06b872f6b?w=400&q=80" alt="" className="w-full h-full object-cover opacity-50" />
@@ -330,7 +330,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Suggested */}
+
           <div className="card p-4">
             <p className="text-[10px] font-semibold text-[#3a3a3a] uppercase tracking-widest mb-3">Suggested Artists</p>
             <div className="space-y-3">
@@ -352,7 +352,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Discussions */}
+
           <div className="card p-4">
             <p className="text-[10px] font-semibold text-[#3a3a3a] uppercase tracking-widest mb-3">Latest Discussions</p>
             <div className="space-y-3">
@@ -368,7 +368,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Jobs */}
           <div className="rounded-2xl p-4 border border-[#252560] bg-gradient-to-br from-[#111030] to-[#0c0c28]">
             <p className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest mb-1.5">Jobs Board</p>
             <p className="text-sm text-white font-medium mb-0.5">3 new listings from AAA studios</p>
@@ -379,7 +378,7 @@ const Dashboard = () => {
           </div>
 
           <div className="flex flex-wrap gap-x-3 gap-y-1 pb-4 px-1">
-            {["Privacy", "Terms", "About", "Blog", "Support Cara"].map(l => (
+            {["Privacy", "Terms", "About", "Blog", "Support EmptyArt"].map(l => (
               <span key={l} className="text-[11px] text-[#2e2e2e] hover:text-[#666] cursor-pointer transition-colors">{l}</span>
             ))}
           </div>

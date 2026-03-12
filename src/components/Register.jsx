@@ -17,8 +17,8 @@ const AuthPage = () => {
     try {
       const response = await fetch(
         mode === 'signup' 
-          ? 'http://localhost:5000/api/signup' 
-          : 'http://localhost:5000/api/login',
+          ? 'http://localhost:5000/api/auth/signup' 
+          : 'http://localhost:5000/api/auth/login',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

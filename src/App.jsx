@@ -54,7 +54,7 @@ const App = () => {
     }
   }, [])
   return (
-    <Router>
+    
       <div className='dark:bg-black relative'>
         <Toaster/>
         <Navbar theme={theme} setTheme={setTheme}/>
@@ -88,7 +88,7 @@ const App = () => {
         <div ref={dotRef} className='fixed top-0 left-0 h-3 w-3 rounded-full bg-primary pointer-events-none z-[9999]'></div>
       
       </div>
-    </Router>  
+      
   )
 }
 

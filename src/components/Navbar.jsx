@@ -35,9 +35,6 @@ const Navbar = ({theme, setTheme}) => {
                 <a onClick={()=> setSidebarOpen(false)} href="#our-story" className='sm:hover:border-b'>Our story</a>
                 <a onClick={()=> setSidebarOpen(false)} href="#register" className='sm:hover:border-b'>Register</a>
                 <a onClick={()=> setSidebarOpen(false)} href="#contact-us" className='sm:hover:border-b'>Contact us</a>
-
-                 {isAdmin && (
-                    <a onClick={()=> setSidebarOpen(false)} href="/admin" className='sm:hover:border-b'>Admin Dashboard</a>)}
                 
             </div> 
 

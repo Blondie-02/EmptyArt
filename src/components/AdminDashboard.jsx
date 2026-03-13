@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-// --- Dummy sub-components for managing items ---
+
 const CommentManagement = ({ comments, onDelete }) => (
   <div>
     {comments.map(c => (

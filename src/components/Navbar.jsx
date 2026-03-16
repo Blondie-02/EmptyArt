@@ -24,7 +24,11 @@ const Navbar = ({theme, setTheme}) => {
         transition={{duration: 0.6, ease: 'easeout'}}
         className='flex justify-between items-center px-4 sm:px-12 lg:px-40 py-4 sticky top-0 z-20 backdrop-blur-xl font-medium bg-white/50 dark:bg-gray-900/70'>
 
-            <img src={theme === 'dark' ? assets.logo_dark : assets.logo} className='w-32 sm:w-40' alt="" />
+
+            <div className="flex items-center gap-2 w-32 sm:w-40">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-800 flex items-center justify-center font-bold text-white text-sm">E</div>
+                <span className="text-[1.15rem] text-white tracking-tight">EmptyArt</span>
+            </div>
 
             <div className={`text-gray-700 dark:text-white sm:text-sm ${!sidebarOpen ? 'max-sm:w-0 overflow-hidden' : 'max-sm:w-60 max-sm:pl-10'} max-sm:fixed top-0 bottom-0 right-0 max-sm:min-h-screen max-sm:h-full max-sm:flex-col max-sm:bg-primary max-sm:text-white max-sm:pt-20 flex sm:items-center gap-5 transition-all`}>
                 

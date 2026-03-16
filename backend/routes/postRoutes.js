@@ -7,9 +7,9 @@ const { getAllPosts, createPost, deletePost } = require("../controllers/postCont
 router.get("/", getAllPosts);
 
 // Create a post (admin) with image upload
-router.post("/admin/create-post", upload.single("image"), createPost);
+router.post("/admin/create-post", verifyAdmin, upload.single("image"), createPost);
 
 // Delete a post (admin)
-router.delete("/admin/delete-post/:id", deletePost);
+router.delete("/admin/delete-post/:id", verifyAdmin, deletePost);
 
 module.exports = router;

@@ -14,3 +14,7 @@
 @theme {
   --color-primary: #5044e5;
 }
+
+.input-field {
+  @apply w-full p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-primary;
+}

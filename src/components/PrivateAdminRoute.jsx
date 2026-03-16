@@ -1,18 +1,17 @@
-
-import React from 'react'
-import { Navigate } from 'react-router-dom'
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 
 const PrivateAdminRoute = ({ children }) => {
-  const token = localStorage.getItem('token')
-  if (!token) return <Navigate to='/' /> // not logged in
+  const token = localStorage.getItem('token');
+  if (!token) return <Navigate to='/' />;
 
   try {
-    const payload = JSON.parse(atob(token.split('.')[1])) // decode JWT
-    if (payload.role !== 'admin') return <Navigate to='/' /> // not admin
-    return children
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.role !== 'admin') return <Navigate to='/' />;
+    return children;
   } catch (err) {
-    return <Navigate to='/' />
+    return <Navigate to='/' />;
   }
-}
+};
 
-export default PrivateAdminRoute
+export default PrivateAdminRoute;

@@ -1,21 +1,29 @@
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const cloudinary = require("../config/cloudinary"); // make sure this exports your cloudinary instance
+const cloudinary = require("../config/cloudinary");
 
-// Cloudinary storage configuration
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, file) => {
-    return {
-      folder: "artposts",
-      format: file.mimetype.split("/")[1], // jpg, png, jpeg
-      public_id: `${Date.now()}-${file.originalname}`,
-    };
-  },
+  cloudinary,
+  params: async (req, file) => ({
+    folder: "artposts",
+    resource_type: "image",
+    format: file.mimetype.split("/")[1],
+    public_id: `post-${Date.now()}`,
+    transformation: [{ width: 800, height: 800, crop: "limit" }]
+  }),
 });
 
-// Multer instance
-const upload = multer({ storage });
+const allowedFormats = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
 
-// Export multer instance
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (allowedFormats.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"), false);
+    }
+  }
+});
+
 module.exports = upload;

@@ -1,7 +1,7 @@
 // server.js
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
+const pool  = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const postRoutes = require("./routes/postRoutes");
 const { verifyAdmin } = require("./middleware/auth");
@@ -10,14 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- Create a single Pool instance ---
-const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "artapp",
-  password: "1234",
-  port: 5432,
-});
 
 // Optional: test connection on startup
 pool
@@ -112,4 +104,3 @@ adminRoutes.forEach(route => {
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-module.exports = { pool }; // export for testing if needed

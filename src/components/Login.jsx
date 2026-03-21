@@ -14,16 +14,23 @@ const Login = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+
       const result = await res.json();
 
-      if (!result.success) return alert("Invalid credentials");
+      if (!res.ok) {
+        return alert(result.error || "Invalid credentials");
+      }
 
       localStorage.setItem("token", result.token);
       localStorage.setItem("role", result.user.role);
 
-      // Auto-redirect based on role
-      if (result.user.role === "admin") navigate("/admin");
-      else navigate("/dashboard");
+      if (result.user.role === "admin") {
+        navigate("/admin");
+      }
+      else {
+        navigate("/dashboard");
+      }
+
     } catch (err) {
       console.error(err);
       alert("Login failed");
@@ -31,9 +38,31 @@ const Login = () => {
   };
 
   return (
-    <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 300 }}>
-      <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+    <form
+      onSubmit={handleLogin}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        maxWidth: 300
+      }}
+    >
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+
       <button type="submit">Login</button>
     </form>
   );

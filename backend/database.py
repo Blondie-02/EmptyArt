@@ -1,30 +1,23 @@
-# ============================================================
-# database.py - Defines all DATABASE TABLES as Python classes
-# Each class = one table in the database
-# ============================================================
-
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
-# This is the database object we import in other files
 db = SQLAlchemy()
 
-
 # ---- TABLE 1: Users ----------------------------------------
-# Stores every person who registers on Empty Art
 class User(db.Model):
-    id         = db.Column(db.Integer, primary_key=True)          # Auto-generated ID
-    email      = db.Column(db.String(150), unique=True, nullable=False)  # Must be unique
+    id         = db.Column(db.Integer, primary_key=True)
+    email      = db.Column(db.String(150), unique=True, nullable=False)
     username   = db.Column(db.String(80),  unique=True, nullable=False)
-    password   = db.Column(db.String(200), nullable=False)        # Will be hashed (hidden)
-    role       = db.Column(db.String(20),  default="user")        # "user" or "admin"
+    password   = db.Column(db.String(200), nullable=False)
+    role       = db.Column(db.String(20),  default="user")
     created_at = db.Column(db.DateTime,    default=datetime.utcnow)
 
-    # This links users to their comments (one user → many comments)
-    comments   = db.relationship("Comment", backref="author", lazy=True)
+    comments        = db.relationship("Comment",      backref="author",   lazy=True)
+    likes           = db.relationship("Like",         backref="user",     lazy=True)
+    sent_messages   = db.relationship("Message", foreign_keys="Message.sender_id",   backref="sender",   lazy=True)
+    received_messages = db.relationship("Message", foreign_keys="Message.receiver_id", backref="receiver", lazy=True)
 
     def to_dict(self):
-        """Convert user to a dictionary so Flask can send it as JSON"""
         return {
             "id":         self.id,
             "email":      self.email,
@@ -32,32 +25,28 @@ class User(db.Model):
             "role":       self.role,
             "created_at": self.created_at.isoformat()
         }
-        # Notice: we never include 'password' here for security!
 
 
 # ---- TABLE 2: Artworks -------------------------------------
-# Stores every artwork with its Before/During/After stages
 class Artwork(db.Model):
     id               = db.Column(db.Integer, primary_key=True)
     title            = db.Column(db.String(200), nullable=False)
     artist_name      = db.Column(db.String(150), nullable=False)
     description      = db.Column(db.Text)
 
-    # The THREE stages of your "Empty Art" concept
-    before_image_url = db.Column(db.String(300))  # Sketch / idea
-    before_text      = db.Column(db.Text)         # Artist's thoughts at start
+    before_image_url = db.Column(db.String(300))
+    before_text      = db.Column(db.Text)
+    during_image_url = db.Column(db.String(300))
+    during_text      = db.Column(db.Text)
+    after_image_url  = db.Column(db.String(300))
+    after_text       = db.Column(db.Text)
 
-    during_image_url = db.Column(db.String(300))  # Work in progress
-    during_text      = db.Column(db.Text)         # Artist's thoughts during creation
-
-    after_image_url  = db.Column(db.String(300))  # Final artwork
-    after_text       = db.Column(db.Text)         # Artist's reflection
-
-    mood             = db.Column(db.String(50), default="calm")  # For mood themes
-    is_approved      = db.Column(db.Boolean, default=False)      # Admin must approve
-    created_at       = db.Column(db.DateTime, default=datetime.utcnow)
+    mood             = db.Column(db.String(50),  default="calm")
+    is_approved      = db.Column(db.Boolean,     default=False)
+    created_at       = db.Column(db.DateTime,    default=datetime.utcnow)
 
     comments         = db.relationship("Comment", backref="artwork", lazy=True)
+    likes            = db.relationship("Like",    backref="artwork", lazy=True)
 
     def to_dict(self):
         return {
@@ -78,15 +67,13 @@ class Artwork(db.Model):
 
 
 # ---- TABLE 3: Comments -------------------------------------
-# Stores user comments on artworks
 class Comment(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
-    content    = db.Column(db.Text, nullable=False)
-    stage      = db.Column(db.String(20), default="after")  # "before", "during", or "after"
-    is_flagged = db.Column(db.Boolean, default=False)       # Safety: flagged by users
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    content    = db.Column(db.Text,    nullable=False)
+    stage      = db.Column(db.String(20), default="after")
+    is_flagged = db.Column(db.Boolean,   default=False)
+    created_at = db.Column(db.DateTime,  default=datetime.utcnow)
 
-    # Foreign keys: link comment to a user and an artwork
     user_id    = db.Column(db.Integer, db.ForeignKey("user.id"),    nullable=False)
     artwork_id = db.Column(db.Integer, db.ForeignKey("artwork.id"), nullable=False)
 
@@ -99,14 +86,54 @@ class Comment(db.Model):
             "created_at": self.created_at.isoformat(),
             "user_id":    self.user_id,
             "artwork_id": self.artwork_id,
-            "username":   self.author.username  # Include username for display
+            "username":   self.author.username
         }
 
 
 # ---- TABLE 4: SavedArtworks --------------------------------
-# When a user "saves" an artwork to view later
 class SavedArtwork(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
     user_id    = db.Column(db.Integer, db.ForeignKey("user.id"),    nullable=False)
     artwork_id = db.Column(db.Integer, db.ForeignKey("artwork.id"), nullable=False)
     saved_at   = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# ---- TABLE 5: Likes ----------------------------------------
+class Like(db.Model):
+    id         = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user_id    = db.Column(db.Integer, db.ForeignKey("user.id"),    nullable=False)
+    artwork_id = db.Column(db.Integer, db.ForeignKey("artwork.id"), nullable=False)
+
+    # Prevent a user from liking the same artwork twice
+    __table_args__ = (db.UniqueConstraint("user_id", "artwork_id", name="unique_like"),)
+
+    def to_dict(self):
+        return {
+            "id":         self.id,
+            "user_id":    self.user_id,
+            "artwork_id": self.artwork_id,
+            "created_at": self.created_at.isoformat()
+        }
+
+
+# ---- TABLE 6: Messages -------------------------------------
+class Message(db.Model):
+    id          = db.Column(db.Integer, primary_key=True)
+    content     = db.Column(db.Text,    nullable=False)
+    is_read     = db.Column(db.Boolean, default=False)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    sender_id   = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id":          self.id,
+            "content":     self.content,
+            "is_read":     self.is_read,
+            "created_at":  self.created_at.isoformat(),
+            "sender_id":   self.sender_id,
+            "receiver_id": self.receiver_id
+        }

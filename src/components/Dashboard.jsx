@@ -100,10 +100,11 @@ export default function Dashboard() {
   useEffect(() => {
   const fetchPosts = async () => {
     try {
-      const res  = await fetch("http://localhost:5000/api/posts");
+      const res = await fetch("http://localhost:5000/api/admin/artworks"); // your admin GET endpoint
       const data = await res.json();
+      console.log("Fetched posts:", data); // check what your backend sends
       if (data.success) {
-        setPosts(data.posts);
+        setPosts(data.artworks); // adjust key to match backend response
       }
     } catch (err) {
       console.error("Failed to fetch posts:", err);
@@ -112,7 +113,7 @@ export default function Dashboard() {
     }
   };
   fetchPosts();
-  }, []);
+}, []);
 
   const NAV = [
     { key:"home",      label:"Home",          icon: s => <IcHome s={s} /> },

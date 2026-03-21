@@ -4,7 +4,7 @@ from flask import request, jsonify
 from datetime import datetime, timedelta
 from database import User
 
-SECRET_KEY = "emptyart-secret-change-in-production"
+SECRET_KEY = "empty-art"
 
 def generate_token(user_id, role):
     payload = {

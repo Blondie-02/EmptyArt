@@ -7,7 +7,7 @@ posts_bp = Blueprint("posts", __name__)
 @posts_bp.route("/", methods=["GET"])
 def get_all_posts():
     artworks = Artwork.query.order_by(Artwork.created_at.desc()).all()
-    return jsonify([a.to_dict() for a in artworks]), 200
+    return jsonify({"success": True, "posts": [a.to_dict() for a in artworks]}), 200
 
 @posts_bp.route("/<int:artwork_id>", methods=["GET"])
 def get_post(artwork_id):
@@ -47,4 +47,7 @@ def get_saved_posts(current_user):
     saves = SavedArtwork.query.filter_by(user_id=current_user.id).all()
     artworks = [Artwork.query.get(s.artwork_id) for s in saves]
     artworks = [a for a in artworks if a]
-    return jsonify([a.to_dict() for a in artworks]), 200
+    return jsonify({
+    "success": True,
+    "posts": [a.to_dict() for a in artworks]
+}), 200

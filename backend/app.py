@@ -11,8 +11,15 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "emptyart-secret-change-in-production"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///emptyart.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max upload
 
-CORS(app)
+CORS(app,
+    origins=["http://localhost:5173"],
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
+
 db.init_app(app)
 
 app.register_blueprint(auth_bp,     url_prefix="/api/auth")

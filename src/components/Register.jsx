@@ -7,39 +7,64 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
+
   const onSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+      e.preventDefault();
+      setLoading(true);
 
-    const formData = new FormData(e.target)
-    const data = Object.fromEntries(formData)
+      try {
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
 
-    try {
-      const response = await fetch(
-        mode === 'signup' 
-          ? 'http://localhost:5000/api/auth/signup' 
-          : 'http://localhost:5000/api/auth/login',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
+        const response = await fetch(
+          mode === "signup"
+            ? "http://localhost:5000/api/auth/register"
+            : "http://localhost:5000/api/auth/login",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 409) {
+            alert("User with this email already exists.");
+          } else {
+            alert(result.error || result.message || "Something went wrong");
+          }
+          setLoading(false);
+          return;
         }
-      )
-      const result = await response.json()
 
-      if (result.success) {
-        localStorage.setItem('token', result.token)
-        navigate('/dashboard')
-      } else {
-        alert(result.message || 'Something went wrong')
+        if (!result.user || !result.user.role) {
+          alert("Invalid user data returned from server.");
+          setLoading(false);
+          return;
+        }
+
+        const userRole = result.user.role.toLowerCase();
+
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("role", userRole);
+
+        if (userRole === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert("Cannot connect to server. Please try again.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error(err)
-      alert('Cannot connect to server. Please try again.')
-    }
+    };
 
-    setLoading(false)
-  }
+
 
   const isSignup = mode === 'signup'
 
@@ -88,7 +113,7 @@ const AuthPage = () => {
         </div>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4 p-6 sm:p-8">
-          {isSignup && <input name="name" placeholder="Your name" required className="input-field" />}
+          {isSignup && <input name="username" placeholder="Your username" required className="input-field" />}
           <input name="email" type="email" placeholder="Email" required className="input-field" />
           <input name="password" type="password" placeholder="Password" required className="input-field" />
 

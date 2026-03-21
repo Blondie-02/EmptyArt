@@ -196,8 +196,11 @@ const AdminDashboard = () => {
       fd.append("title", title);
       fd.append("content", content);
       if (imageFile) fd.append("image", imageFile);
-      const r = await fetch("http://localhost:5000/api/admin/create-post", {
-        method:"POST", headers:{ Authorization:"Bearer "+token }, body:fd
+      const r = await fetch("http://localhost:5000/api/admin/artworks", {
+        method:"POST", headers:{
+           Authorization:"Bearer "+token, 
+          },
+        body: fd,
       });
       const d = await r.json();
       if (d.success) {
@@ -212,7 +215,7 @@ const AdminDashboard = () => {
 
   const handleDelete = async (type, id) => {
     const urlMap = {
-      posts:    `/api/admin/delete-post/${id}`,
+      posts:    `/api/admin/artworks/${id}`,
       comments: `/api/admin/comments/${id}`,
       likes:    `/api/admin/likes/${id}`,
       messages: `/api/admin/messages/${id}`,

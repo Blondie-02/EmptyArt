@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
-import { api, imageUrl } from "../api";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, useInView } from "motion/react";
+import { api, imageUrl, clearAuth } from "../api";
 import PostDetail from "./PostDetail";
+import toast from "react-hot-toast";
 
 export default function Explore() {
   const [posts, setPosts] = useState([]);
@@ -8,118 +11,100 @@ export default function Explore() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api("/api/auth/me").catch(() => { clearAuth(); navigate("/"); });
+  }, [navigate]);
 
   const fetchPosts = useCallback(async (p) => {
     try {
-      const data = await api(`/api/uploads/?page=${p}&per_page=24`);
-      if (p === 1) setPosts(data.posts);
-      else setPosts((prev) => [...prev, ...data.posts]);
+      setLoading(true);
+      const data = await api("/api/uploads/?page=" + p + "&limit=24");
+      const uploads = data.uploads || data.posts || data;
+      if (p === 1) setPosts(uploads);
+      else setPosts((prev) => [...prev, ...uploads]);
       setHasMore(data.page < data.pages);
-    } catch {
-      /* silent */
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error("Failed to load"); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchPosts(1); }, [fetchPosts]);
 
-  const loadMore = () => {
-    const next = page + 1;
-    setPage(next);
-    fetchPosts(next);
-  };
+  const loadMore = () => { const next = page + 1; setPage(next); fetchPosts(next); };
 
   const toggleLike = async (id) => {
-    setPosts((p) =>
-      p.map((x) =>
-        x.id === id ? { ...x, is_liked: !x.is_liked, like_count: x.is_liked ? x.like_count - 1 : x.like_count + 1 } : x
-      )
-    );
-    try { await api(`/api/uploads/${id}/like`, { method: "POST" }); } catch {}
+    setPosts((p) => p.map((x) => x.id === id ? { ...x, is_liked: !x.is_liked, like_count: x.is_liked ? x.like_count - 1 : x.like_count + 1 } : x));
+    try { await api("/api/uploads/" + id + "/like", { method: "POST" }); } catch {
+      setPosts((p) => p.map((x) => x.id === id ? { ...x, is_liked: !x.is_liked, like_count: x.is_liked ? x.like_count - 1 : x.like_count + 1 } : x));
+    }
   };
 
   const toggleBookmark = async (id) => {
-    setPosts((p) => p.map((x) => (x.id === id ? { ...x, is_bookmarked: !x.is_bookmarked } : x)));
-    try { await api(`/api/uploads/${id}/bookmark`, { method: "POST" }); } catch {}
+    setPosts((p) => p.map((x) => x.id === id ? { ...x, is_bookmarked: !x.is_bookmarked } : x));
+    try { await api("/api/uploads/" + id + "/bookmark", { method: "POST" }); } catch {
+      setPosts((p) => p.map((x) => x.id === id ? { ...x, is_bookmarked: !x.is_bookmarked } : x));
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] p-4">
-        <div className="max-w-5xl mx-auto grid grid-cols-3 gap-1 sm:gap-2">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="aspect-square bg-gray-200 dark:bg-[#1a1a1a] rounded-lg animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-[#050505] text-white pb-32">
       {selectedPost && (
-        <PostDetail
-          postId={selectedPost}
-          onClose={() => setSelectedPost(null)}
-          onLike={toggleLike}
-          onBookmark={toggleBookmark}
-        />
+        <PostDetail postId={selectedPost} onClose={() => setSelectedPost(null)} onLike={toggleLike} onBookmark={toggleBookmark} />
       )}
+      <main className="max-w-6xl mx-auto px-4 md:px-8 pt-8">
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-10 border-b-4 border-[#FF4D00] pb-4">
+          <h1 className="font-['Space_Grotesk'] font-black text-5xl md:text-6xl uppercase italic tracking-tighter">EXPLORE</h1>
+          <p className="font-['Space_Grotesk'] uppercase tracking-[0.3em] text-white/30 text-sm mt-2">DISCOVER THE UNDERGROUND</p>
+        </motion.div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold mb-6">Explore</h1>
-
-        {posts.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">No artworks yet. Be the first to upload!</div>
+        {loading && posts.length === 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="aspect-square bg-[#1a1a1a] animate-pulse border-2 border-[#FF4D00]/5" />
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-20">
+            <span className="material-symbols-outlined text-7xl text-white/10 mb-4 block">search_off</span>
+            <p className="font-['Space_Grotesk'] font-black text-3xl uppercase text-white/20">NOTHING YET</p>
+          </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-1 sm:gap-2">
-              {posts.map((post) => (
-                <div
-                  key={post.id}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {posts.map((post, idx) => (
+                <motion.div key={post.id}
+                  initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.5, delay: Math.min(idx * 0.05, 0.4), ease: [0.22, 1, 0.36, 1] }}
                   onClick={() => setSelectedPost(post.id)}
-                  className="relative aspect-square cursor-pointer group overflow-hidden rounded-lg"
-                >
-                  <img
-                    src={imageUrl(post.image_url)}
-                    alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex items-center gap-4 text-white font-semibold text-sm">
-                      <span className="flex items-center gap-1">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                        {post.like_count}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        {post.comment_count}
-                      </span>
+                  className="group relative cursor-pointer bg-[#121212] border-2 border-transparent hover:border-[#FF4D00] transition-colors overflow-hidden aspect-square">
+                  <img src={imageUrl(post.image_url)} alt={post.title}
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-500" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all flex items-end p-3 opacity-0 group-hover:opacity-100">
+                    <div>
+                      {post.title && <p className="font-['Space_Grotesk'] font-black text-sm uppercase truncate">{post.title}</p>}
+                      <p className="text-[10px] font-mono text-white/50">@{post.author?.username || "unknown"}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-
             {hasMore && (
-              <div className="text-center py-8">
-                <button
-                  onClick={loadMore}
-                  className="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#282828] rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-[#222] transition"
-                >
-                  Load more
+              <div className="text-center pt-10">
+                <button onClick={loadMore} disabled={loading}
+                  className="bg-[#1a1a1a] text-white px-12 py-4 font-['Space_Grotesk'] font-black uppercase tracking-widest border-2 border-[#FF4D00]/30 hover:border-[#FF4D00] hover:bg-[#FF4D00] hover:text-black transition-all">
+                  {loading ? "LOADING..." : "LOAD MORE"}
                 </button>
               </div>
             )}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

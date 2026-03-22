@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { api, imageUrl } from "../api";
+import { motion } from "motion/react";
+import { api, imageUrl, clearAuth } from "../api";
 import PostDetail from "./PostDetail";
 import toast from "react-hot-toast";
 
@@ -9,290 +10,231 @@ export default function Profile() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ username: "", bio: "" });
   const [loading, setLoading] = useState(true);
-  const [me, setMe] = useState(null);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editBio, setEditBio] = useState("");
-  const [editUsername, setEditUsername] = useState("");
-  const [avatarFile, setAvatarFile] = useState(null);
 
   useEffect(() => {
-    api("/api/auth/me").then((d) => setMe(d.user)).catch(() => {});
-  }, []);
+    api("/api/auth/me")
+      .then((d) => setCurrentUser(d.user))
+      .catch(() => { clearAuth(); navigate("/"); });
+  }, [navigate]);
 
-  const fetchProfile = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [profileData, uploadsData] = await Promise.all([
-        api(`/api/users/${userId}`),
-        api(`/api/uploads/user/${userId}`),
-      ]);
-      setProfile(profileData);
-      setPosts(uploadsData.posts);
-    } catch {
-      toast.error("Failed to load profile");
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        setLoading(true);
+        const [profileData, postsData] = await Promise.all([
+          api("/api/users/" + userId),
+          api("/api/uploads/user/" + userId),
+        ]);
+        setProfile(profileData);
+        setPosts(postsData.posts || postsData.uploads || []);
+        setEditForm({ username: profileData.username || "", bio: profileData.bio || "" });
+      } catch { toast.error("Failed to load profile"); }
+      finally { setLoading(false); }
+    })();
   }, [userId]);
 
-  useEffect(() => { fetchProfile(); }, [fetchProfile]);
+  const isOwn = currentUser && profile && currentUser.id === profile.id;
 
-  const toggleFollow = async () => {
-    if (!profile) return;
-    const wasFollowing = profile.is_following;
-    setProfile((p) => ({
-      ...p,
-      is_following: !wasFollowing,
-      followers: wasFollowing ? p.followers - 1 : p.followers + 1,
-    }));
+  const handleFollow = async () => {
     try {
-      await api(`/api/users/${userId}/follow`, { method: "POST" });
-    } catch {
+      await api("/api/users/" + userId + "/follow", { method: "POST" });
       setProfile((p) => ({
         ...p,
-        is_following: wasFollowing,
-        followers: wasFollowing ? p.followers : p.followers - 1,
+        is_following: !p.is_following,
+        followers_count: p.is_following ? p.followers_count - 1 : p.followers_count + 1,
       }));
-    }
+    } catch { toast.error("Failed"); }
   };
 
-  const saveProfile = async () => {
-    const fd = new FormData();
-    fd.append("bio", editBio);
-    fd.append("username", editUsername);
-    if (avatarFile) fd.append("avatar", avatarFile);
-
+  const handleSave = async () => {
     try {
-      const data = await api(`/api/users/${userId}`, { method: "PUT", body: fd, isFormData: true });
-      setProfile((p) => ({ ...p, ...data.user }));
-      setEditMode(false);
-      setAvatarFile(null);
-      toast.success("Profile updated");
-    } catch (err) {
-      toast.error(err.message);
-    }
+      const form = new FormData();
+      form.append("username", editForm.username);
+      form.append("bio", editForm.bio);
+      await api("/api/users/" + userId, {
+        method: "PUT",
+        body: form,
+        isFormData: true,
+      });
+      setProfile((p) => ({ ...p, ...editForm }));
+      setEditing(false);
+      toast.success("Updated");
+    } catch { toast.error("Failed to update"); }
+  };
+
+  const handleAvatar = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append("avatar", file);
+    try {
+      const data = await api("/api/users/" + userId, { method: "PUT", body: form, isFormData: true });
+      setProfile((p) => ({ ...p, avatar_url: data.user?.avatar_url || data.avatar_url }));
+      toast.success("Avatar updated");
+    } catch { toast.error("Failed to upload avatar"); }
   };
 
   const toggleLike = async (id) => {
-    setPosts((p) =>
-      p.map((x) =>
-        x.id === id ? { ...x, is_liked: !x.is_liked, like_count: x.is_liked ? x.like_count - 1 : x.like_count + 1 } : x
-      )
-    );
-    try { await api(`/api/uploads/${id}/like`, { method: "POST" }); } catch {}
+    setPosts((p) => p.map((x) => x.id === id ? { ...x, is_liked: !x.is_liked, like_count: x.is_liked ? x.like_count - 1 : x.like_count + 1 } : x));
+    try { await api("/api/uploads/" + id + "/like", { method: "POST" }); } catch {
+      setPosts((p) => p.map((x) => x.id === id ? { ...x, is_liked: !x.is_liked, like_count: x.is_liked ? x.like_count - 1 : x.like_count + 1 } : x));
+    }
   };
 
   const toggleBookmark = async (id) => {
-    setPosts((p) => p.map((x) => (x.id === id ? { ...x, is_bookmarked: !x.is_bookmarked } : x)));
-    try { await api(`/api/uploads/${id}/bookmark`, { method: "POST" }); } catch {}
+    setPosts((p) => p.map((x) => x.id === id ? { ...x, is_bookmarked: !x.is_bookmarked } : x));
+    try { await api("/api/uploads/" + id + "/bookmark", { method: "POST" }); } catch {
+      setPosts((p) => p.map((x) => x.id === id ? { ...x, is_bookmarked: !x.is_bookmarked } : x));
+    }
   };
 
-  const isOwnProfile = me && profile && me.id === profile.id;
+  if (loading) return (
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <p className="font-['Space_Grotesk'] font-black text-3xl text-white/20 uppercase animate-pulse">LOADING_ARTIST...</p>
+    </div>
+  );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center">
-        <div className="animate-spin w-10 h-10 rounded-full border-4 border-gray-300 dark:border-gray-600 border-t-primary" />
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center text-gray-500">
-        User not found
-      </div>
-    );
-  }
+  if (!profile) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-[#050505] text-white pb-32">
       {selectedPost && (
-        <PostDetail
-          postId={selectedPost}
-          onClose={() => setSelectedPost(null)}
-          onLike={toggleLike}
-          onBookmark={toggleBookmark}
-        />
+        <PostDetail postId={selectedPost} onClose={() => setSelectedPost(null)} onLike={toggleLike} onBookmark={toggleBookmark} />
       )}
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Back button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition mb-6"
-        >
-          ← Back
-        </button>
-
-        {/* Profile header */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-10">
-          {/* Avatar */}
-          <div className="relative">
-            {profile.avatar_url ? (
-              <img
-                src={imageUrl(profile.avatar_url)}
-                className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white dark:border-[#1e1e1e]"
-                alt=""
-              />
-            ) : (
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white font-bold text-3xl border-4 border-white dark:border-[#1e1e1e]">
-                {profile.username[0]?.toUpperCase()}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="relative bg-[#0a0a0a] border-b-4 border-[#FF4D00]">
+        <div className="max-w-4xl mx-auto px-4 md:px-8 pt-12 pb-8">
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            <motion.div
+              initial={{ opacity: 0, rotate: -10, scale: 0.8 }}
+              animate={{ opacity: 1, rotate: 0, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="relative group">
+              <div className="w-28 h-28 md:w-36 md:h-36 bg-[#121212] border-4 border-[#FF4D00] shadow-[8px_8px_0px_0px_#00e3fd] overflow-hidden -rotate-3 group-hover:rotate-0 transition-transform">
+                {profile.avatar_url
+                  ? <img src={imageUrl(profile.avatar_url)} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center font-['Space_Grotesk'] font-black text-5xl text-[#FF4D00]">{profile.username[0].toUpperCase()}</div>}
               </div>
-            )}
-            {editMode && (
-              <label className="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full cursor-pointer hover:opacity-90">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setAvatarFile(e.target.files[0])}
-                />
-              </label>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">
-              {editMode ? (
-                <input
-                  value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value)}
-                  className="input-field max-w-xs"
-                />
-              ) : (
-                <h1 className="text-xl font-bold">{profile.username}</h1>
+              {isOwn && (
+                <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#00e3fd] text-black flex items-center justify-center cursor-pointer rotate-6 hover:rotate-0 transition-transform">
+                  <span className="material-symbols-outlined text-sm">edit</span>
+                  <input type="file" accept="image/*" onChange={handleAvatar} className="hidden" />
+                </label>
               )}
+            </motion.div>
 
-              {isOwnProfile ? (
-                editMode ? (
-                  <div className="flex gap-2">
-                    <button onClick={saveProfile} className="px-4 py-1.5 bg-primary text-white rounded-lg text-sm font-semibold hover:opacity-90 transition">
-                      Save
-                    </button>
-                    <button onClick={() => setEditMode(false)} className="px-4 py-1.5 border border-gray-300 dark:border-[#282828] rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition">
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditMode(true);
-                      setEditBio(profile.bio || "");
-                      setEditUsername(profile.username);
-                    }}
-                    className="px-4 py-1.5 border border-gray-300 dark:border-[#282828] rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition"
-                  >
-                    Edit profile
-                  </button>
-                )
-              ) : (
-                <button
-                  onClick={toggleFollow}
-                  className={`px-6 py-1.5 rounded-lg text-sm font-semibold transition ${
-                    profile.is_following
-                      ? "border border-gray-300 dark:border-[#282828] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
-                      : "bg-primary text-white hover:opacity-90"
-                  }`}
-                >
-                  {profile.is_following ? "Following" : "Follow"}
-                </button>
-              )}
-            </div>
-
-            {/* Stats */}
-            <div className="flex justify-center sm:justify-start gap-6 mb-4">
-              <div className="text-center">
-                <span className="font-bold">{profile.upload_count || 0}</span>
-                <span className="text-gray-500 ml-1 text-sm">posts</span>
-              </div>
-              <div className="text-center">
-                <span className="font-bold">{profile.followers || 0}</span>
-                <span className="text-gray-500 ml-1 text-sm">followers</span>
-              </div>
-              <div className="text-center">
-                <span className="font-bold">{profile.following || 0}</span>
-                <span className="text-gray-500 ml-1 text-sm">following</span>
-              </div>
-            </div>
-
-            {/* Bio */}
-            {editMode ? (
-              <textarea
-                value={editBio}
-                onChange={(e) => setEditBio(e.target.value)}
-                placeholder="Tell us about yourself..."
-                rows={3}
-                className="input-field resize-none w-full"
-              />
-            ) : (
-              profile.bio && <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">{profile.bio}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Uploads grid */}
-        <div className="border-t border-gray-200 dark:border-[#1e1e1e] pt-6">
-          {posts.length === 0 ? (
-            <div className="text-center py-16">
-              <svg className="mx-auto mb-4 text-gray-300 dark:text-gray-600" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-              <p className="text-gray-400 dark:text-gray-500">
-                {isOwnProfile ? "Share your first artwork!" : "No posts yet"}
-              </p>
-              {isOwnProfile && (
-                <button
-                  onClick={() => navigate("/upload")}
-                  className="mt-4 bg-primary text-white px-6 py-2 rounded-xl font-semibold hover:opacity-90 transition"
-                >
-                  Upload
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-1 sm:gap-2">
-              {posts.map((post) => (
-                <div
-                  key={post.id}
-                  onClick={() => setSelectedPost(post.id)}
-                  className="relative aspect-square cursor-pointer group overflow-hidden rounded-lg"
-                >
-                  <img
-                    src={imageUrl(post.image_url)}
-                    alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex items-center gap-4 text-white font-semibold text-sm">
-                      <span className="flex items-center gap-1">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                        {post.like_count}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        {post.comment_count}
-                      </span>
-                    </div>
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-1 min-w-0">
+              {editing ? (
+                <div className="space-y-4">
+                  <input value={editForm.username}
+                    onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))}
+                    className="w-full bg-[#1a1a1a] border-2 border-[#FF4D00] px-4 py-3 font-['Space_Grotesk'] font-black text-2xl uppercase text-white focus:outline-none" />
+                  <textarea value={editForm.bio}
+                    onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))}
+                    rows={3}
+                    className="w-full bg-[#1a1a1a] border-2 border-[#FF4D00]/30 px-4 py-3 text-sm text-white/70 focus:outline-none resize-none" />
+                  <div className="flex gap-3">
+                    <button onClick={handleSave} className="bg-[#FF4D00] text-black px-6 py-2 font-['Space_Grotesk'] font-black uppercase">SAVE</button>
+                    <button onClick={() => setEditing(false)} className="border-2 border-white/20 px-6 py-2 font-['Space_Grotesk'] font-black uppercase text-white/50 hover:text-white">CANCEL</button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ) : (
+                <>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <h1 className="font-['Space_Grotesk'] font-black text-4xl md:text-5xl uppercase italic tracking-tighter">
+                      {profile.username}
+                    </h1>
+                    {isOwn ? (
+                      <button onClick={() => setEditing(true)}
+                        className="border-2 border-[#FF4D00] text-[#FF4D00] px-4 py-1 font-['Space_Grotesk'] font-bold uppercase text-sm hover:bg-[#FF4D00] hover:text-black">
+                        EDIT
+                      </button>
+                    ) : (
+                      <button onClick={handleFollow}
+                        className={"px-6 py-2 font-['Space_Grotesk'] font-black uppercase text-sm " +
+                          (profile.is_following
+                            ? "bg-[#00e3fd] text-black border-2 border-[#00e3fd]"
+                            : "bg-[#FF4D00] text-black border-2 border-[#FF4D00] hover:bg-transparent hover:text-[#FF4D00]")}>
+                        {profile.is_following ? "FOLLOWING" : "FOLLOW"}
+                      </button>
+                    )}
+                  </div>
+                  {profile.bio && <p className="text-white/50 mt-3 max-w-xl text-sm leading-relaxed">{profile.bio}</p>}
+                </>
+              )}
+
+              <div className="flex gap-8 mt-6">
+                <div className="text-center">
+                  <p className="font-['Space_Grotesk'] font-black text-3xl text-[#FF4D00]">{posts.length}</p>
+                  <p className="font-['Space_Grotesk'] font-bold uppercase text-[10px] tracking-[0.3em] text-white/30">WORKS</p>
+                </div>
+                <div className="text-center">
+                  <p className="font-['Space_Grotesk'] font-black text-3xl text-[#00e3fd]">{profile.followers_count || 0}</p>
+                  <p className="font-['Space_Grotesk'] font-bold uppercase text-[10px] tracking-[0.3em] text-white/30">FOLLOWERS</p>
+                </div>
+                <div className="text-center">
+                  <p className="font-['Space_Grotesk'] font-black text-3xl">{profile.following_count || 0}</p>
+                  <p className="font-['Space_Grotesk'] font-bold uppercase text-[10px] tracking-[0.3em] text-white/30">FOLLOWING</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
+      </motion.div>
+
+      <div className="max-w-4xl mx-auto px-4 md:px-8 pt-12">
+        <div className="flex items-center justify-between mb-8 border-b-4 border-[#FF4D00]/30 pb-4">
+          <h2 className="font-['Space_Grotesk'] font-black text-2xl uppercase tracking-tighter">PORTFOLIO // {posts.length} WORKS</h2>
+        </div>
+
+        {posts.length === 0 ? (
+          <div className="text-center py-20 bg-[#0a0a0a] border-2 border-dashed border-[#FF4D00]/20">
+            <span className="material-symbols-outlined text-6xl text-white/10 mb-4">palette</span>
+            <p className="font-['Space_Grotesk'] font-bold uppercase text-white/20">No works yet</p>
+            {isOwn && (
+              <button onClick={() => navigate("/upload")}
+                className="mt-4 bg-[#FF4D00] text-black px-8 py-3 font-['Space_Grotesk'] font-black uppercase">
+                DROP YOUR FIRST WORK
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {posts.map((post, idx) => (
+              <motion.div key={post.id}
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, delay: Math.min(idx * 0.06, 0.5), ease: [0.22, 1, 0.36, 1] }}
+                onClick={() => setSelectedPost(post.id)}
+                className="group relative cursor-pointer bg-[#121212] border-2 border-transparent hover:border-[#FF4D00] transition-colors overflow-hidden aspect-square">
+                <img src={imageUrl(post.image_url)} alt={post.title}
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-500" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all flex items-end p-3 opacity-0 group-hover:opacity-100">
+                  <div className="flex gap-4 text-sm font-['Space_Grotesk'] font-bold">
+                    <span className="flex items-center gap-1 text-[#FF4D00]">
+                      <span className="material-symbols-outlined text-sm" style={{fontVariationSettings: "'FILL' 1"}}>favorite</span>
+                      {post.like_count || 0}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

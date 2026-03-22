@@ -20,12 +20,16 @@ const App = () => {
     pathname.startsWith("/profile");
 
   return (
-    <div className="dark:bg-[#0a0a0a] min-h-screen relative">
-      <Toaster />
+    <div className="bg-[#050505] min-h-screen relative">
+      <Toaster
+        toastOptions={{
+          style: { background: "#1a1a1a", color: "#fff", border: "2px solid #FF4D00", borderRadius: "0px", fontFamily: "Space Grotesk", fontWeight: 700, textTransform: "uppercase", fontSize: "12px" },
+        }}
+      />
 
       {showNav && <AppNav />}
 
-      <div className={showNav ? "md:ml-[220px] pb-16 md:pb-0" : ""}>
+      <div className={showNav ? "pt-[72px] pb-20 md:pb-0" : ""}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/feed" element={<Feed />} />

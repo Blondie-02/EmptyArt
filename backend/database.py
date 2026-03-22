@@ -1,7 +1,12 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 
 db = SQLAlchemy()
+
+
+def _utcnow():
+    return datetime.now(timezone.utc)
+
 
 # ---- TABLE 1: Users ----------------------------------------
 class User(db.Model):
@@ -9,131 +14,117 @@ class User(db.Model):
     email      = db.Column(db.String(150), unique=True, nullable=False)
     username   = db.Column(db.String(80),  unique=True, nullable=False)
     password   = db.Column(db.String(200), nullable=False)
+    bio        = db.Column(db.Text, default="")
+    avatar_url = db.Column(db.String(300), default="")
     role       = db.Column(db.String(20),  default="user")
-    created_at = db.Column(db.DateTime,    default=datetime.utcnow)
+    created_at = db.Column(db.DateTime,    default=_utcnow)
 
-    comments        = db.relationship("Comment",      backref="author",   lazy=True)
-    likes           = db.relationship("Like",         backref="user",     lazy=True)
-    sent_messages   = db.relationship("Message", foreign_keys="Message.sender_id",   backref="sender",   lazy=True)
-    received_messages = db.relationship("Message", foreign_keys="Message.receiver_id", backref="receiver", lazy=True)
+    uploads   = db.relationship("Upload",   backref="author",  lazy=True)
+    reactions = db.relationship("Reaction", backref="user",    lazy=True)
 
-    def to_dict(self):
-        return {
+    def follower_count(self):
+        return Follow.query.filter_by(following_id=self.id).count()
+
+    def following_count(self):
+        return Follow.query.filter_by(follower_id=self.id).count()
+
+    def to_dict(self, include_counts=False):
+        d = {
             "id":         self.id,
             "email":      self.email,
             "username":   self.username,
+            "bio":        self.bio or "",
+            "avatar_url": self.avatar_url or "",
             "role":       self.role,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
         }
+        if include_counts:
+            d["followers"]  = self.follower_count()
+            d["following"]  = self.following_count()
+            d["upload_count"] = Upload.query.filter_by(user_id=self.id).count()
+        return d
 
 
-# ---- TABLE 2: Artworks -------------------------------------
-class Artwork(db.Model):
+# ---- TABLE 2: Uploads --------------------------------------
+class Upload(db.Model):
+    id          = db.Column(db.Integer, primary_key=True)
+    user_id     = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    image_url   = db.Column(db.String(300), nullable=False)
+    title       = db.Column(db.String(200), default="")
+    description = db.Column(db.Text, default="")
+    created_at  = db.Column(db.DateTime, default=_utcnow)
+
+    reactions = db.relationship("Reaction", backref="upload", lazy=True, cascade="all, delete-orphan")
+
+    def like_count(self):
+        return Reaction.query.filter_by(upload_id=self.id, type="like").count()
+
+    def comment_count(self):
+        return Reaction.query.filter_by(upload_id=self.id, type="comment").count()
+
+    def to_dict(self, current_user_id=None):
+        d = {
+            "id":          self.id,
+            "user_id":     self.user_id,
+            "image_url":   self.image_url,
+            "title":       self.title or "",
+            "description": self.description or "",
+            "created_at":  self.created_at.isoformat(),
+            "like_count":  self.like_count(),
+            "comment_count": self.comment_count(),
+            "author": {
+                "id":       self.author.id,
+                "username": self.author.username,
+                "avatar_url": self.author.avatar_url or "",
+            },
+        }
+        if current_user_id:
+            d["is_liked"] = Reaction.query.filter_by(
+                upload_id=self.id, user_id=current_user_id, type="like"
+            ).first() is not None
+            d["is_bookmarked"] = Reaction.query.filter_by(
+                upload_id=self.id, user_id=current_user_id, type="bookmark"
+            ).first() is not None
+        return d
+
+
+# ---- TABLE 3: Reactions ------------------------------------
+class Reaction(db.Model):
     id               = db.Column(db.Integer, primary_key=True)
-    title            = db.Column(db.String(200), nullable=False)
-    artist_name      = db.Column(db.String(150), nullable=False)
-    description      = db.Column(db.Text)
+    upload_id        = db.Column(db.Integer, db.ForeignKey("upload.id"), nullable=False)
+    user_id          = db.Column(db.Integer, db.ForeignKey("user.id"),   nullable=False)
+    type             = db.Column(db.String(20), nullable=False)   # "like", "comment", "bookmark"
+    reaction_details = db.Column(db.Text, default="")             # comment text
+    created_at       = db.Column(db.DateTime, default=_utcnow)
 
-    before_image_url = db.Column(db.String(300))
-    before_text      = db.Column(db.Text)
-    during_image_url = db.Column(db.String(300))
-    during_text      = db.Column(db.Text)
-    after_image_url  = db.Column(db.String(300))
-    after_text       = db.Column(db.Text)
-
-    mood             = db.Column(db.String(50),  default="calm")
-    is_approved      = db.Column(db.Boolean,     default=False)
-    created_at       = db.Column(db.DateTime,    default=datetime.utcnow)
-
-    comments         = db.relationship("Comment", backref="artwork", lazy=True)
-    likes            = db.relationship("Like",    backref="artwork", lazy=True)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "upload_id", "type",
+                            name="unique_like_bookmark"),
+    )
 
     def to_dict(self):
         return {
             "id":               self.id,
-            "title":            self.title,
-            "artist_name":      self.artist_name,
-            "description":      self.description,
-            "before_image_url": self.before_image_url,
-            "before_text":      self.before_text,
-            "during_image_url": self.during_image_url,
-            "during_text":      self.during_text,
-            "after_image_url":  self.after_image_url,
-            "after_text":       self.after_text,
-            "mood":             self.mood,
-            "is_approved":      self.is_approved,
-            "created_at":       self.created_at.isoformat()
+            "upload_id":        self.upload_id,
+            "user_id":          self.user_id,
+            "type":             self.type,
+            "reaction_details": self.reaction_details or "",
+            "created_at":       self.created_at.isoformat(),
+            "username":         self.user.username if self.user else "",
+            "avatar_url":       self.user.avatar_url or "" if self.user else "",
         }
 
 
-# ---- TABLE 3: Comments -------------------------------------
-class Comment(db.Model):
-    id         = db.Column(db.Integer, primary_key=True)
-    content    = db.Column(db.Text,    nullable=False)
-    stage      = db.Column(db.String(20), default="after")
-    is_flagged = db.Column(db.Boolean,   default=False)
-    created_at = db.Column(db.DateTime,  default=datetime.utcnow)
+# ---- TABLE 4: Follow ---------------------------------------
+class Follow(db.Model):
+    id           = db.Column(db.Integer, primary_key=True)
+    follower_id  = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    following_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at   = db.Column(db.DateTime, default=_utcnow)
 
-    user_id    = db.Column(db.Integer, db.ForeignKey("user.id"),    nullable=False)
-    artwork_id = db.Column(db.Integer, db.ForeignKey("artwork.id"), nullable=False)
+    follower  = db.relationship("User", foreign_keys=[follower_id],  backref="following_rel")
+    following = db.relationship("User", foreign_keys=[following_id], backref="followers_rel")
 
-    def to_dict(self):
-        return {
-            "id":         self.id,
-            "content":    self.content,
-            "stage":      self.stage,
-            "is_flagged": self.is_flagged,
-            "created_at": self.created_at.isoformat(),
-            "user_id":    self.user_id,
-            "artwork_id": self.artwork_id,
-            "username":   self.author.username
-        }
-
-
-# ---- TABLE 4: SavedArtworks --------------------------------
-class SavedArtwork(db.Model):
-    id         = db.Column(db.Integer, primary_key=True)
-    user_id    = db.Column(db.Integer, db.ForeignKey("user.id"),    nullable=False)
-    artwork_id = db.Column(db.Integer, db.ForeignKey("artwork.id"), nullable=False)
-    saved_at   = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-# ---- TABLE 5: Likes ----------------------------------------
-class Like(db.Model):
-    id         = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    user_id    = db.Column(db.Integer, db.ForeignKey("user.id"),    nullable=False)
-    artwork_id = db.Column(db.Integer, db.ForeignKey("artwork.id"), nullable=False)
-
-    # Prevent a user from liking the same artwork twice
-    __table_args__ = (db.UniqueConstraint("user_id", "artwork_id", name="unique_like"),)
-
-    def to_dict(self):
-        return {
-            "id":         self.id,
-            "user_id":    self.user_id,
-            "artwork_id": self.artwork_id,
-            "created_at": self.created_at.isoformat()
-        }
-
-
-# ---- TABLE 6: Messages -------------------------------------
-class Message(db.Model):
-    id          = db.Column(db.Integer, primary_key=True)
-    content     = db.Column(db.Text,    nullable=False)
-    is_read     = db.Column(db.Boolean, default=False)
-    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
-
-    sender_id   = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    receiver_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-
-    def to_dict(self):
-        return {
-            "id":          self.id,
-            "content":     self.content,
-            "is_read":     self.is_read,
-            "created_at":  self.created_at.isoformat(),
-            "sender_id":   self.sender_id,
-            "receiver_id": self.receiver_id
-        }
+    __table_args__ = (
+        db.UniqueConstraint("follower_id", "following_id", name="unique_follow"),
+    )

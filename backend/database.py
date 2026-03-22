@@ -41,6 +41,8 @@ class User(db.Model):
         if include_counts:
             d["followers"]  = self.follower_count()
             d["following"]  = self.following_count()
+            d["followers_count"]  = self.follower_count()
+            d["following_count"]  = self.following_count()
             d["upload_count"] = Upload.query.filter_by(user_id=self.id).count()
         return d
 
@@ -109,6 +111,7 @@ class Reaction(db.Model):
             "user_id":          self.user_id,
             "type":             self.type,
             "reaction_details": self.reaction_details or "",
+            "text":             self.reaction_details or "",
             "created_at":       self.created_at.isoformat(),
             "username":         self.user.username if self.user else "",
             "avatar_url":       self.user.avatar_url or "" if self.user else "",

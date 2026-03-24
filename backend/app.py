@@ -22,7 +22,7 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max upload
 import re
 
 CORS(app,
-    origins=[re.compile(r"http://localhost:\d+")],
+    origins=[re.compile(r"http://localhost:\d+"), re.compile(r"http://100\.118\.105\.124:\d+")],
     supports_credentials=True,
     allow_headers=["Content-Type", "Authorization"],
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
@@ -56,4 +56,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)

@@ -10,8 +10,9 @@ import Bookmarks from "./components/Bookmarks";
 import AdminDashboard from "./components/AdminDashboard";
 import PrivateAdminRoute from "./components/PrivateAdminRoute";
 import AppNav from "./components/AppNav";
+import About from "./components/About";
 
-const authedRoutes = ["/feed", "/explore", "/upload", "/bookmarks", "/admin"];
+const authedRoutes = ["/feed", "/explore", "/upload", "/bookmarks", "/admin", "/about"];
 
 const App = () => {
   const { pathname } = useLocation();
@@ -36,6 +37,7 @@ const App = () => {
           <Route path="/explore" element={<Explore />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/bookmarks" element={<Bookmarks />} />
+          <Route path="/about" element={<About />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route
             path="/admin"

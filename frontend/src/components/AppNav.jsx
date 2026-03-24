@@ -47,6 +47,7 @@ export default function AppNav() {
     { to: "/feed", label: "FEED" },
     { to: "/explore", label: "VAULT" },
     { to: "/upload", label: "DROPS" },
+    { to: "/about", label: "ABOUT" },
   ];
 
   return (
@@ -118,6 +119,7 @@ export default function AppNav() {
               { to: "/explore", label: "Gallery" },
               { to: "/upload", label: "Drop" },
               { to: "/bookmarks", label: "Vault" },
+              { to: "/about", label: "About" },
               ...(user ? [{ to: "/profile/" + user.id, label: "Profile" }] : []),
               ...(user?.role === "admin" ? [{ to: "/admin", label: "Admin" }] : []),
             ].map((item) => (
